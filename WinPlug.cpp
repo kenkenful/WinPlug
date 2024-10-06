@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <iostream>
 
+#define MYDATA_STRING 100
+
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
 {
     switch (fdwCtrlType)
@@ -45,6 +47,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
+    case WM_COPYDATA: {
+        COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
+      
+         std::cout << *(UINT16*)cds->lpData << std::endl;
+
+        UINT16 val = 0xff;
+        std::cout << "WM_COPYDATA" << std::endl;
+        return 99;
+    }
 
     case WM_DEVICECHANGE: {
         std::cout << "hpt plug " << std::endl;
@@ -69,9 +80,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 int main(void)
 {
+    //Sleep(3 * 1000);    // wait for 3 sec.
+    //FreeConsole();      // free console.
     WNDCLASS sampleClass{ 0 };
-    sampleClass.lpszClassName = TEXT("CtrlHandlerSampleClass");
+    sampleClass.lpszClassName = TEXT("WinServiceClass");
     sampleClass.lpfnWndProc = WindowProc;
+
+    if (FindWindow("WinServiceClass", "WinService") != NULL) {
+        MessageBox(NULL, "すでに起動しております。"
+            , "Multiplex starting prevention Test B", MB_OK);
+        return FALSE;
+    }
 
     if (!RegisterClass(&sampleClass))
     {
@@ -82,7 +101,7 @@ int main(void)
     HWND hwnd = CreateWindowEx(
         0,
         sampleClass.lpszClassName,
-        TEXT("Console Control Handler Sample"),
+        TEXT("WinService"),
         0,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -102,12 +121,13 @@ int main(void)
 
     ShowWindow(hwnd, SW_HIDE);
 
-    if (SetConsoleCtrlHandler(CtrlHandler, TRUE))
-    {
-        printf("\nThe Control Handler is installed.\n");
-        printf("\n -- Now try pressing Ctrl+C or Ctrl+Break, or");
-        printf("\n    try logging off or closing the console...\n");
-        printf("\n(...waiting in a loop for events...)\n\n");
+    //if (SetConsoleCtrlHandler(CtrlHandler, TRUE))
+    //{
+    //    printf("\nThe Control Handler is installed.\n");
+    //    printf("\n -- Now try pressing Ctrl+C or Ctrl+Break, or");
+    //    printf("\n    try logging off or closing the console...\n");
+    //    printf("\n(...waiting in a loop for events...)\n\n");
+
 
         // Pump message loop for the window we created.
         MSG msg{};
@@ -117,10 +137,10 @@ int main(void)
             DispatchMessage(&msg);
         }
         return 0;
-    }
-    else
-    {
-        printf("\nERROR: Could not set control handler");
-        return 1;
-    }
+    //}
+    //else
+    //{
+    //    printf("\nERROR: Could not set control handler");
+    //    return 1;
+    //}
 }
